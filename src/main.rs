@@ -1,4 +1,10 @@
-use axum::{response::IntoResponse, routing::get, Json, Router};
+use axum::{
+    http::StatusCode,
+    response::IntoResponse,
+    routing::{get, post},
+    Json, Router,
+};
+use battlesnake_game_types::wire_representation::Game;
 use serde::Serialize;
 use std::{env, net::SocketAddr};
 use tracing::{info, info_span, instrument};
@@ -29,7 +35,9 @@ async fn main() {
     // build our application with a route
     let app = Router::new()
         // `GET /` goes to `root`
-        .route("/", get(snake_info));
+        .route("/", get(snake_info))
+        .route("/start", post(game_start))
+        .route("/end", post(game_end));
 
     // run our app with hyper
     // `axum::Server` is a re-export of `hyper::Server`
@@ -45,6 +53,8 @@ async fn main() {
 
 #[instrument]
 async fn snake_info() -> impl IntoResponse {
+    info!("Hit Snake Info Route");
+
     Json(SnakeInfo {
         apiversion: "1.0".to_string(),
         author: None,
@@ -53,4 +63,18 @@ async fn snake_info() -> impl IntoResponse {
         tail: None,
         version: None,
     })
+}
+
+#[instrument(skip(game), fields(game_id = %game.game.id))]
+async fn game_start(Json(game): Json<Game>) -> impl IntoResponse {
+    info!("Hit Start Route");
+
+    StatusCode::OK
+}
+
+#[instrument(skip(game), fields(game_id = %game.game.id))]
+async fn game_end(Json(game): Json<Game>) -> impl IntoResponse {
+    info!("Hit End Route");
+
+    StatusCode::OK
 }

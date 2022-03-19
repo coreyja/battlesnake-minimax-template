@@ -6,8 +6,10 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-axum = "0.4.8"
 battlesnake-minimax = { git = "https://github.com/coreyja/battlesnake-rs.git", branch = "ca/main/minimax-ready-for-public" }
+battlesnake-game-types = { git = "https://github.com/coreyja/battlesnake-game-types.git", rev = "4d341ed" }
+
+axum = "0.4.8"
 serde = { version = "1.0.136", features = ["derive"] }
 serde_json = "1.0.79"
 tokio = { version = "1.17.0", features = ["full"] }

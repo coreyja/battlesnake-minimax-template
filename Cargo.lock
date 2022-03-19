@@ -96,6 +96,7 @@ name = "battlesnake-minimax-template"
 version = "0.1.0"
 dependencies = [
  "axum",
+ "battlesnake-game-types",
  "battlesnake-minimax",
  "serde",
  "serde_json",
