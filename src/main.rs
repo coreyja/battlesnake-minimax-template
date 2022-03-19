@@ -67,10 +67,10 @@ async fn snake_info() -> impl IntoResponse {
 
     Json(SnakeInfo {
         apiversion: "1".to_string(),
-        author: None,
-        color: None,
-        head: None,
-        tail: None,
+        author: Some("{{ authors }}".to_string()),
+        color: Some("{{ color_hex }}".to_string()),
+        head: Some("{{ head }}".to_string()),
+        tail: Some("{{ tail }}".to_string()),
         version: None,
     })
 }

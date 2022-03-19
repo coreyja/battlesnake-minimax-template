@@ -1,0 +1,20 @@
+[template]
+ignore = [
+  "target",
+]
+
+[placeholders.color_hex]
+type = "string"
+prompt = "What color do you want your snake to be? [In hex format]"
+default = "#888888"
+regex = "^#(?:[0-9a-fA-F]{3}){1,2}$"
+
+[placeholders.head]
+type = "string"
+prompt = "What snake head do you want to use?"
+default = "default"
+
+[placeholders.tail]
+type = "string"
+prompt = "What snake tail do you want to use?"
+default = "default"
