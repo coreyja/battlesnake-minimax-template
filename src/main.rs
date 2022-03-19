@@ -6,14 +6,17 @@ use axum::{
 };
 use battlesnake_game_types::{
     compact_representation::StandardCellBoard4Snakes11x11,
-    types::{build_snake_id_map, Move, YouDeterminableGame},
-    wire_representation::Game,
+    types::{
+        build_snake_id_map, FoodGettableGame, HeadGettableGame, LengthGettableGame,
+        YouDeterminableGame,
+    },
+    wire_representation::{Game, Position},
 };
 use battlesnake_minimax::{MinimaxReturn, ParanoidSnake};
 use serde::Serialize;
 use serde_json::json;
-use std::{env, net::SocketAddr};
-use tracing::{info, info_span, instrument};
+use std::{cmp::Reverse, env, net::SocketAddr};
+use tracing::{info, instrument};
 use tracing_subscriber::EnvFilter;
 
 #[derive(Serialize)]
@@ -106,7 +109,7 @@ async fn make_move(Json(wire_game): Json<Game>) -> impl IntoResponse {
         compact_game,
         game_info,
         turn,
-        std::time::Duration::from_millis(300),
+        std::time::Duration::from_millis(200),
     );
 
     let chosen_move = result.direction_for(compact_game.you_id()).unwrap();
@@ -114,9 +117,28 @@ async fn make_move(Json(wire_game): Json<Game>) -> impl IntoResponse {
     Json(json!({ "move": chosen_move.to_string() }))
 }
 
-// This is the scoring function that we will use to evaluate the game states
-// Here it just returns a constant but would ideally contain some logic to decide which
-// states are better than others
-fn score_function(_board: &StandardCellBoard4Snakes11x11) -> i32 {
-    4
+fn distance_between(a: &Position, b: &Position) -> i32 {
+    (a.x - b.x).abs() + (a.y - b.y).abs()
+}
+
+/// We want to minimize the distance to the closest food
+/// AND make sure we maximize our length
+///
+/// If we _only_ look at minimizing the distance to the closest food, we won't actually eat the
+/// food just hang out around it
+fn score_function(board: &StandardCellBoard4Snakes11x11) -> (i64, Reverse<i32>) {
+    let food = board.get_all_food_as_positions();
+
+    let head = board.get_head_as_position(board.you_id());
+    let length = board.get_length_i64(board.you_id());
+
+    let dist_to_closest_food = food
+        .iter()
+        .map(|pos| distance_between(pos, &head))
+        .min()
+        .unwrap_or(i32::MAX);
+
+    // Since `dist_to_closest_food` is something we want to minimize, we wrap it on `Reverse` so
+    // that smaller values are preferred
+    (length, Reverse(dist_to_closest_food))
 }
