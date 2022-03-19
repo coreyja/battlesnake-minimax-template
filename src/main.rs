@@ -4,7 +4,12 @@ use axum::{
     routing::{get, post},
     Json, Router,
 };
-use battlesnake_game_types::{types::Move, wire_representation::Game};
+use battlesnake_game_types::{
+    compact_representation::StandardCellBoard4Snakes11x11,
+    types::{build_snake_id_map, Move, YouDeterminableGame},
+    wire_representation::Game,
+};
+use battlesnake_minimax::{MinimaxReturn, ParanoidSnake};
 use serde::Serialize;
 use serde_json::json;
 use std::{env, net::SocketAddr};
@@ -81,9 +86,37 @@ async fn game_end(Json(game): Json<Game>) -> impl IntoResponse {
     StatusCode::OK
 }
 
-#[instrument(skip(game), fields(game_id = %game.game.id))]
-async fn make_move(Json(game): Json<Game>) -> impl IntoResponse {
+#[instrument(skip(wire_game), fields(game_id = %wire_game.game.id))]
+async fn make_move(Json(wire_game): Json<Game>) -> impl IntoResponse {
     info!("Hit Make Move Route");
 
-    Json(json!({ "move": Move::Right.to_string() }))
+    let game_info = wire_game.game.clone();
+    let turn = wire_game.turn;
+
+    let snake_id_map = build_snake_id_map(&wire_game);
+    let compact_game =
+        StandardCellBoard4Snakes11x11::convert_from_game(wire_game, &snake_id_map).unwrap();
+
+    let minimax_snake = ParanoidSnake::from_func(&score_function, "minimax_snake");
+
+    // Now we can use the minimax snake to generate the next move!
+    // Here we use the function deepend_minimax to run the minimax algorithm for 100 milliseconds
+    // before returning the best move
+    let result: MinimaxReturn<_, _> = minimax_snake.deepened_minimax(
+        compact_game,
+        game_info,
+        turn,
+        std::time::Duration::from_millis(300),
+    );
+
+    let chosen_move = result.direction_for(compact_game.you_id()).unwrap();
+
+    Json(json!({ "move": chosen_move.to_string() }))
+}
+
+// This is the scoring function that we will use to evaluate the game states
+// Here it just returns a constant but would ideally contain some logic to decide which
+// states are better than others
+fn score_function(_board: &StandardCellBoard4Snakes11x11) -> i32 {
+    4
 }
