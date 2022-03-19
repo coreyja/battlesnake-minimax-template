@@ -18,11 +18,8 @@ And I'm running on OSX, so need the `apple-darwin` version. Unfortunately their 
 for Apple appears to be broken. Version `v0.11.1` however is working! It's the latest working version I found
 
 ```
-gh release download v0.11.1 -R cargo-generate/cargo-generate --pattern "*darwin*" -D tmp
-
-tar -xvf tmp/cargo-generate-v0.11.1-x86_64-apple-darwin.tar.gz -C ~/bin cargo-generate
-
-chmod +x ~/bin/cargo-generate
+# Copy the url for v0.11.1 from the UI and paste it into the wget
+curl -L "https://github.com/cargo-generate/cargo-generate/releases/download/v0.11.1/cargo-generate-v0.11.1-x86_64-apple-darwin.tar.gz" | tar -zxC ~/bin cargo-generate
 
 cargo generate coreyja/battlesnake-minimax-template
 ```
